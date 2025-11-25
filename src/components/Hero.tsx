@@ -6,19 +6,49 @@ export function Hero() {
   const [displayedText, setDisplayedText] = useState('');
   const fullText = '$ status: accepting_new_clients';
   const typingSpeed = 50; // milliseconds per character
+  const pauseAfterTyping = 2000; // pause after typing completes (ms)
+  const pauseAfterDeleting = 1000; // pause after deleting completes (ms)
 
   useEffect(() => {
     let currentIndex = 0;
-    const typingInterval = setInterval(() => {
-      if (currentIndex < fullText.length) {
-        setDisplayedText(fullText.slice(0, currentIndex + 1));
-        currentIndex++;
-      } else {
-        clearInterval(typingInterval);
-      }
-    }, typingSpeed);
+    let isDeleting = false;
+    let timeoutId: NodeJS.Timeout;
 
-    return () => clearInterval(typingInterval);
+    const type = () => {
+      if (!isDeleting) {
+        // Typing forward
+        if (currentIndex < fullText.length) {
+          setDisplayedText(fullText.slice(0, currentIndex + 1));
+          currentIndex++;
+          timeoutId = setTimeout(type, typingSpeed);
+        } else {
+          // Finished typing, wait then start deleting
+          timeoutId = setTimeout(() => {
+            isDeleting = true;
+            type();
+          }, pauseAfterTyping);
+        }
+      } else {
+        // Deleting backward
+        if (currentIndex > 0) {
+          currentIndex--;
+          setDisplayedText(fullText.slice(0, currentIndex));
+          timeoutId = setTimeout(type, typingSpeed);
+        } else {
+          // Finished deleting, wait then start typing again
+          timeoutId = setTimeout(() => {
+            isDeleting = false;
+            type();
+          }, pauseAfterDeleting);
+        }
+      }
+    };
+
+    type();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   const scrollToInquire = () => {
@@ -36,19 +66,51 @@ export function Hero() {
   };
 
   return (
-    <section id="home" className="min-h-screen flex items-center justify-center px-6 lg:px-12 pt-16 relative overflow-hidden">
-      {/* Grid Background Effect */}
+    <section 
+      id="home" 
+      className="min-h-screen flex items-center justify-center px-6 lg:px-12 pt-16 relative overflow-hidden"
+    >
+      
+      {/* Animated circuit paths overlay */}
       <motion.div 
-        className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:4rem_4rem]"
-        animate={{
-          backgroundPosition: ['0px 0px', '64px 64px'],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: 'linear',
-        }}
-      ></motion.div>
+        className="absolute inset-0 opacity-10"
+        initial={{ opacity: 0.05 }}
+        animate={{ opacity: [0.05, 0.15, 0.05] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+          <motion.path
+            d="M 100 200 L 300 200 L 300 400 L 500 400"
+            stroke="rgba(34, 197, 94, 0.6)"
+            strokeWidth="1"
+            fill="none"
+            strokeDasharray="5,5"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: [0, 0.6, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.path
+            d="M 800 100 L 1000 100 L 1000 300 L 1200 300"
+            stroke="rgba(34, 197, 94, 0.5)"
+            strokeWidth="1"
+            fill="none"
+            strokeDasharray="5,5"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: [0, 0.5, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          />
+          <motion.path
+            d="M 200 600 L 400 600 L 400 800 L 600 800"
+            stroke="rgba(34, 197, 94, 0.4)"
+            strokeWidth="1"
+            fill="none"
+            strokeDasharray="5,5"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: [0, 0.4, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          />
+        </svg>
+      </motion.div>
       
       <div className="max-w-7xl w-full relative z-10">
         <div className="max-w-5xl">
@@ -106,16 +168,16 @@ export function Hero() {
             <motion.button
               onClick={scrollToInquire}
               className="px-8 py-4 bg-white text-black hover:bg-gray-200 transition-colors font-mono text-sm"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 400, damping: 17 } }}
+              whileTap={{ scale: 0.98, transition: { type: "spring", stiffness: 400, damping: 17 } }}
             >
               {'>'} Start a project
             </motion.button>
             <motion.button
               onClick={scrollToSolutions}
               className="px-8 py-4 border border-white/20 text-white hover:bg-white/10 transition-colors font-mono text-sm"
-              whileHover={{ scale: 1.02, borderColor: 'rgba(255,255,255,0.4)' }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.02, borderColor: 'rgba(255,255,255,0.4)', transition: { type: "spring", stiffness: 400, damping: 17 } }}
+              whileTap={{ scale: 0.98, transition: { type: "spring", stiffness: 400, damping: 17 } }}
             >
               {'>'} View capabilities
             </motion.button>

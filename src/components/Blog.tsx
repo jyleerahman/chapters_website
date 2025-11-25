@@ -33,21 +33,51 @@ export function Blog() {
   const [displayedText, setDisplayedText] = useState('');
   const fullText = '$ cat blog/';
   const typingSpeed = 50;
+  const pauseAfterTyping = 2000;
+  const pauseAfterDeleting = 1000;
 
   useEffect(() => {
     if (!isInView) return;
     
     let currentIndex = 0;
-    const typingInterval = setInterval(() => {
-      if (currentIndex < fullText.length) {
-        setDisplayedText(fullText.slice(0, currentIndex + 1));
-        currentIndex++;
-      } else {
-        clearInterval(typingInterval);
-      }
-    }, typingSpeed);
+    let isDeleting = false;
+    let timeoutId: NodeJS.Timeout;
 
-    return () => clearInterval(typingInterval);
+    const type = () => {
+      if (!isDeleting) {
+        // Typing forward
+        if (currentIndex < fullText.length) {
+          setDisplayedText(fullText.slice(0, currentIndex + 1));
+          currentIndex++;
+          timeoutId = setTimeout(type, typingSpeed);
+        } else {
+          // Finished typing, wait then start deleting
+          timeoutId = setTimeout(() => {
+            isDeleting = true;
+            type();
+          }, pauseAfterTyping);
+        }
+      } else {
+        // Deleting backward
+        if (currentIndex > 0) {
+          currentIndex--;
+          setDisplayedText(fullText.slice(0, currentIndex));
+          timeoutId = setTimeout(type, typingSpeed);
+        } else {
+          // Finished deleting, wait then start typing again
+          timeoutId = setTimeout(() => {
+            isDeleting = false;
+            type();
+          }, pauseAfterDeleting);
+        }
+      }
+    };
+
+    type();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [isInView, fullText]);
 
   return (
@@ -63,7 +93,7 @@ export function Blog() {
         >
           <div className="font-mono text-sm text-green-400 mb-4">
             {displayedText}
-            {isInView && displayedText.length < fullText.length && (
+            {isInView && (
               <span className="animate-pulse">|</span>
             )}
           </div>
@@ -123,8 +153,8 @@ export function Blog() {
         >
           <motion.button 
             className="px-6 py-3 bg-white/5 text-white border border-white/10 hover:bg-white/10 transition-colors text-sm font-mono"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05, transition: { type: "spring", stiffness: 400, damping: 17 } }}
+            whileTap={{ scale: 0.95, transition: { type: "spring", stiffness: 400, damping: 17 } }}
           >
             View all posts →
           </motion.button>

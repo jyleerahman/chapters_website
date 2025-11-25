@@ -40,26 +40,56 @@ export function Portfolio() {
   const [displayedText, setDisplayedText] = useState('');
   const fullText = '$ ls projects/';
   const typingSpeed = 50;
+  const pauseAfterTyping = 2000;
+  const pauseAfterDeleting = 1000;
 
   useEffect(() => {
     if (!isInView) return;
     
     let currentIndex = 0;
-    const typingInterval = setInterval(() => {
-      if (currentIndex < fullText.length) {
-        setDisplayedText(fullText.slice(0, currentIndex + 1));
-        currentIndex++;
-      } else {
-        clearInterval(typingInterval);
-      }
-    }, typingSpeed);
+    let isDeleting = false;
+    let timeoutId: NodeJS.Timeout;
 
-    return () => clearInterval(typingInterval);
+    const type = () => {
+      if (!isDeleting) {
+        // Typing forward
+        if (currentIndex < fullText.length) {
+          setDisplayedText(fullText.slice(0, currentIndex + 1));
+          currentIndex++;
+          timeoutId = setTimeout(type, typingSpeed);
+        } else {
+          // Finished typing, wait then start deleting
+          timeoutId = setTimeout(() => {
+            isDeleting = true;
+            type();
+          }, pauseAfterTyping);
+        }
+      } else {
+        // Deleting backward
+        if (currentIndex > 0) {
+          currentIndex--;
+          setDisplayedText(fullText.slice(0, currentIndex));
+          timeoutId = setTimeout(type, typingSpeed);
+        } else {
+          // Finished deleting, wait then start typing again
+          timeoutId = setTimeout(() => {
+            isDeleting = false;
+            type();
+          }, pauseAfterDeleting);
+        }
+      }
+    };
+
+    type();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [isInView, fullText]);
 
   return (
-    <section id="portfolio" className="py-32 px-6 lg:px-12 bg-black" ref={ref}>
-      <div className="max-w-7xl mx-auto">
+    <section id="portfolio" className="py-32 px-6 lg:px-12 bg-black relative" ref={ref}>
+      <div className="max-w-7xl mx-auto relative z-10">
         <motion.div 
           className="mb-20"
           initial={{ opacity: 0, y: 30 }}
@@ -68,7 +98,7 @@ export function Portfolio() {
         >
           <div className="font-mono text-sm text-green-400 mb-4">
             {displayedText}
-            {isInView && displayedText.length < fullText.length && (
+            {isInView && (
               <span className="animate-pulse">|</span>
             )}
           </div>
@@ -88,7 +118,7 @@ export function Portfolio() {
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
               transition={{ duration: 0.5, delay: 0.1 + (index * 0.1) }}
-              whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+              whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 400, damping: 17 } }}
             >
               <div className="flex items-start justify-between mb-4">
                 <div>

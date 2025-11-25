@@ -60,26 +60,56 @@ export function JoinUs() {
   const [displayedText, setDisplayedText] = useState('');
   const fullText = '$ open positions';
   const typingSpeed = 50;
+  const pauseAfterTyping = 2000;
+  const pauseAfterDeleting = 1000;
 
   useEffect(() => {
     if (!isInView) return;
     
     let currentIndex = 0;
-    const typingInterval = setInterval(() => {
-      if (currentIndex < fullText.length) {
-        setDisplayedText(fullText.slice(0, currentIndex + 1));
-        currentIndex++;
-      } else {
-        clearInterval(typingInterval);
-      }
-    }, typingSpeed);
+    let isDeleting = false;
+    let timeoutId: NodeJS.Timeout;
 
-    return () => clearInterval(typingInterval);
+    const type = () => {
+      if (!isDeleting) {
+        // Typing forward
+        if (currentIndex < fullText.length) {
+          setDisplayedText(fullText.slice(0, currentIndex + 1));
+          currentIndex++;
+          timeoutId = setTimeout(type, typingSpeed);
+        } else {
+          // Finished typing, wait then start deleting
+          timeoutId = setTimeout(() => {
+            isDeleting = true;
+            type();
+          }, pauseAfterTyping);
+        }
+      } else {
+        // Deleting backward
+        if (currentIndex > 0) {
+          currentIndex--;
+          setDisplayedText(fullText.slice(0, currentIndex));
+          timeoutId = setTimeout(type, typingSpeed);
+        } else {
+          // Finished deleting, wait then start typing again
+          timeoutId = setTimeout(() => {
+            isDeleting = false;
+            type();
+          }, pauseAfterDeleting);
+        }
+      }
+    };
+
+    type();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [isInView, fullText]);
 
   return (
-    <section id="join" className="py-32 px-6 lg:px-12 bg-black" ref={ref}>
-      <div className="max-w-7xl mx-auto">
+    <section id="join" className="py-32 px-6 lg:px-12 bg-black relative" ref={ref}>
+      <div className="max-w-7xl mx-auto relative z-10">
         <motion.div 
           className="mb-20"
           initial={{ opacity: 0, y: 30 }}
@@ -88,7 +118,7 @@ export function JoinUs() {
         >
           <div className="font-mono text-sm text-green-400 mb-4">
             {displayedText}
-            {isInView && displayedText.length < fullText.length && (
+            {isInView && (
               <span className="animate-pulse">|</span>
             )}
           </div>
@@ -112,11 +142,10 @@ export function JoinUs() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
                 transition={{ duration: 0.5, delay: 0.2 + (index * 0.1) }}
-                whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
+                whileHover={{ scale: 1.03, transition: { type: "spring", stiffness: 400, damping: 17 } }}
               >
                 <motion.div
-                  whileHover={{ rotate: 360, scale: 1.2 }}
-                  transition={{ duration: 0.5 }}
+                  whileHover={{ rotate: 360, scale: 1.2, transition: { type: "spring", stiffness: 200, damping: 15 } }}
                 >
                   <Icon className="w-8 h-8 text-green-400 mb-4" />
                 </motion.div>
@@ -169,8 +198,8 @@ export function JoinUs() {
                     if (element) element.scrollIntoView({ behavior: 'smooth' });
                   }}
                   className="px-6 py-3 bg-white text-black hover:bg-gray-200 transition-colors text-sm whitespace-nowrap self-start"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.05, transition: { type: "spring", stiffness: 400, damping: 17 } }}
+                  whileTap={{ scale: 0.95, transition: { type: "spring", stiffness: 400, damping: 17 } }}
                 >
                   Apply now
                 </motion.button>
@@ -184,7 +213,7 @@ export function JoinUs() {
           className="bg-gradient-to-r from-white/10 to-white/5 border border-white/20 p-12 text-center"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.6, delay: 0.9 }}
+          transition={{ duration: 0.6, delay: 0.9, ease: [0.16, 1, 0.3, 1] }}
         >
           <h3 className="text-2xl text-white mb-4">
             Don't see your role?
@@ -199,8 +228,8 @@ export function JoinUs() {
               if (element) element.scrollIntoView({ behavior: 'smooth' });
             }}
             className="px-6 py-3 bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors text-sm font-mono"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05, transition: { type: "spring", stiffness: 400, damping: 17 } }}
+            whileTap={{ scale: 0.95, transition: { type: "spring", stiffness: 400, damping: 17 } }}
           >
             {'>'} Send us a message
           </motion.button>

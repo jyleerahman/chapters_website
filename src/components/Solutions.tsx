@@ -48,21 +48,51 @@ export function Solutions() {
   const [displayedText, setDisplayedText] = useState('');
   const fullText = '$ cat solutions.txt';
   const typingSpeed = 50;
+  const pauseAfterTyping = 2000;
+  const pauseAfterDeleting = 1000;
 
   useEffect(() => {
     if (!isInView) return;
     
     let currentIndex = 0;
-    const typingInterval = setInterval(() => {
-      if (currentIndex < fullText.length) {
-        setDisplayedText(fullText.slice(0, currentIndex + 1));
-        currentIndex++;
-      } else {
-        clearInterval(typingInterval);
-      }
-    }, typingSpeed);
+    let isDeleting = false;
+    let timeoutId: NodeJS.Timeout;
 
-    return () => clearInterval(typingInterval);
+    const type = () => {
+      if (!isDeleting) {
+        // Typing forward
+        if (currentIndex < fullText.length) {
+          setDisplayedText(fullText.slice(0, currentIndex + 1));
+          currentIndex++;
+          timeoutId = setTimeout(type, typingSpeed);
+        } else {
+          // Finished typing, wait then start deleting
+          timeoutId = setTimeout(() => {
+            isDeleting = true;
+            type();
+          }, pauseAfterTyping);
+        }
+      } else {
+        // Deleting backward
+        if (currentIndex > 0) {
+          currentIndex--;
+          setDisplayedText(fullText.slice(0, currentIndex));
+          timeoutId = setTimeout(type, typingSpeed);
+        } else {
+          // Finished deleting, wait then start typing again
+          timeoutId = setTimeout(() => {
+            isDeleting = false;
+            type();
+          }, pauseAfterDeleting);
+        }
+      }
+    };
+
+    type();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [isInView, fullText]);
 
   return (
@@ -78,7 +108,7 @@ export function Solutions() {
         >
           <div className="font-mono text-sm text-green-400 mb-4">
             {displayedText}
-            {isInView && displayedText.length < fullText.length && (
+            {isInView && (
               <span className="animate-pulse">|</span>
             )}
           </div>
@@ -139,7 +169,7 @@ export function Solutions() {
                       <motion.span
                         key={i}
                         className="px-2 py-1 bg-white/5 text-gray-400 text-xs font-mono border border-white/10"
-                        whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.1)' }}
+                        whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.1)', transition: { type: "spring", stiffness: 400, damping: 17 } }}
                       >
                         {tech}
                       </motion.span>
@@ -167,8 +197,8 @@ export function Solutions() {
               if (element) element.scrollIntoView({ behavior: 'smooth' });
             }}
             className="px-6 py-3 bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors text-sm"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05, transition: { type: "spring", stiffness: 400, damping: 17 } }}
+            whileTap={{ scale: 0.95, transition: { type: "spring", stiffness: 400, damping: 17 } }}
           >
             Talk to us →
           </motion.button>

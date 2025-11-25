@@ -33,21 +33,51 @@ export function Team() {
   const [displayedText, setDisplayedText] = useState('');
   const fullText = '$ whoami';
   const typingSpeed = 50;
+  const pauseAfterTyping = 2000;
+  const pauseAfterDeleting = 1000;
 
   useEffect(() => {
     if (!isInView) return;
     
     let currentIndex = 0;
-    const typingInterval = setInterval(() => {
-      if (currentIndex < fullText.length) {
-        setDisplayedText(fullText.slice(0, currentIndex + 1));
-        currentIndex++;
-      } else {
-        clearInterval(typingInterval);
-      }
-    }, typingSpeed);
+    let isDeleting = false;
+    let timeoutId: NodeJS.Timeout;
 
-    return () => clearInterval(typingInterval);
+    const type = () => {
+      if (!isDeleting) {
+        // Typing forward
+        if (currentIndex < fullText.length) {
+          setDisplayedText(fullText.slice(0, currentIndex + 1));
+          currentIndex++;
+          timeoutId = setTimeout(type, typingSpeed);
+        } else {
+          // Finished typing, wait then start deleting
+          timeoutId = setTimeout(() => {
+            isDeleting = true;
+            type();
+          }, pauseAfterTyping);
+        }
+      } else {
+        // Deleting backward
+        if (currentIndex > 0) {
+          currentIndex--;
+          setDisplayedText(fullText.slice(0, currentIndex));
+          timeoutId = setTimeout(type, typingSpeed);
+        } else {
+          // Finished deleting, wait then start typing again
+          timeoutId = setTimeout(() => {
+            isDeleting = false;
+            type();
+          }, pauseAfterDeleting);
+        }
+      }
+    };
+
+    type();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [isInView, fullText]);
 
   return (
@@ -63,7 +93,7 @@ export function Team() {
         >
           <div className="font-mono text-sm text-green-400 mb-4">
             {displayedText}
-            {isInView && displayedText.length < fullText.length && (
+            {isInView && (
               <span className="animate-pulse">|</span>
             )}
           </div>
@@ -78,8 +108,8 @@ export function Team() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 font-mono text-sm text-gray-400"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.4, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            whileHover={{ scale: 1.05, transition: { type: "spring", stiffness: 400, damping: 17 } }}
           >
             <motion.span 
               className="text-yellow-400"
@@ -106,8 +136,7 @@ export function Team() {
               >
                 <motion.div 
                   className="w-12 h-12 bg-white/10 border border-white/20 flex items-center justify-center mb-6"
-                  whileHover={{ rotate: 360, scale: 1.1 }}
-                  transition={{ duration: 0.6 }}
+                  whileHover={{ rotate: 360, scale: 1.1, transition: { type: "spring", stiffness: 200, damping: 15 } }}
                 >
                   <Icon className="w-6 h-6 text-white" />
                 </motion.div>
@@ -141,7 +170,7 @@ export function Team() {
           className="bg-white/5 border border-white/10 p-12"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.6, delay: 0.9 }}
+          transition={{ duration: 0.6, delay: 0.9, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="max-w-3xl">
             <h3 className="text-2xl text-white mb-6">

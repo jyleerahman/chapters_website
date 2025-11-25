@@ -35,8 +35,8 @@ export function Inquire() {
   };
 
   return (
-    <section id="inquire" className="py-32 px-6 lg:px-12 bg-black" ref={ref}>
-      <div className="max-w-4xl mx-auto">
+    <section id="inquire" className="py-32 px-6 lg:px-12 bg-black relative" ref={ref}>
+      <div className="max-w-4xl mx-auto relative z-10">
         <motion.div 
           className="mb-12"
           initial={{ opacity: 0, y: 30 }}
@@ -170,8 +170,8 @@ export function Inquire() {
               <motion.button
                 type="submit"
                 className="w-full px-8 py-4 bg-white text-black hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 font-mono text-sm"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 400, damping: 17 } }}
+                whileTap={{ scale: 0.98, transition: { type: "spring", stiffness: 400, damping: 17 } }}
               >
                 <Send className="w-4 h-4" />
                 Send message
